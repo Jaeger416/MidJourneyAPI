@@ -24,8 +24,10 @@ class Receiver:
         os.makedirs(self.local_path, exist_ok=True)
 
         self.sender_initializer()
-
-        self.df = pd.DataFrame(columns = ['prompt', 'url', 'filename', 'is_downloaded'])
+        if os.path.exists(self.df_path):
+            self.df = pd.read_csv(self.df_path)
+        else:
+            self.df = pd.DataFrame(columns = ['prompt', 'url', 'filename', 'is_downloaded'])
 
     
     def sender_initializer(self):
@@ -40,6 +42,7 @@ class Receiver:
     def retrieve_messages(self):
         r = requests.get(
             f'https://discord.com/api/v10/channels/{self.channelid}/messages?limit={100}', headers=self.headers)
+
         jsonn = json.loads(r.text)
         return jsonn
 
@@ -57,7 +60,8 @@ class Receiver:
                         id = message['id']
                         prompt = message['content'].split('**')[1].split(' --')[0]
                         url = message['attachments'][0]['url']
-                        filename = f'{i:05}.png'
+                        cnt = len(os.listdir(self.local_path))
+                        filename = f'{i+cnt:05}.png'
                         if id not in self.df.index:
                             self.df.loc[id] = [prompt, url, filename, 0]
 
@@ -116,9 +120,9 @@ class Receiver:
                 self.outputer()
                 self.downloading_results()
                 self.save_result()
-                time.sleep(5)
-            except ConnectionResetError or requests.exceptions.ProxyError:
-                time.sleep(5)
+                time.sleep(2)
+            except:
+                self.save_result()
 
 def parse_args(args):
     

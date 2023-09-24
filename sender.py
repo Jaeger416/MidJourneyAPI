@@ -63,6 +63,7 @@ def parse_args(args):
     parser.add_argument('--params', help='Path to discord authorization and channel parameters', required=True)
     parser.add_argument('--prompt',help='prompt to generate', default='a little papi')
     parser.add_argument('--from-file',type=str,default=None)
+    parser.add_argument('--resume', type=int, default=0)
         
     return parser.parse_args(args)
 
@@ -79,8 +80,19 @@ if __name__ == "__main__":
     if from_file is not None:
         with open(from_file, 'r') as f:
             data = json.load(f)
-        for prompt in data:
-            sender.send(prompt)
-            time.sleep(10)
-    else:
+
+        idx = args.resume   
+        while idx < len(data):
+            try:
+                prompt = data[idx]
+                sender.send(prompt)
+                time.sleep(3)
+                idx += 1
+                print(f" finished [{idx}/{len(data)}  ")
+            except ConnectionResetError or requests.exceptions.ProxyError:
+                time.sleep(1)
+            except Exception as e:
+                with open('finished_idx.json', 'w') as f:
+                    json.dump(idx, f)
+    else:   
         sender.send(prompt)
