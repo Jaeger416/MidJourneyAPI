@@ -9,6 +9,7 @@ from datetime import datetime
 import glob
 import argparse
 import sys
+import hashlib
 
 class Receiver:
 
@@ -20,14 +21,19 @@ class Receiver:
         self.params = params
         self.local_path = local_path
         self.task_name = task_name
-        self.df_path = f'{task_name}.csv'
+        self.json_path = f'{task_name}.json'
         os.makedirs(self.local_path, exist_ok=True)
+        
+        with open('hps_training_prompts.json', 'r') as f:
+            self.all_prompts = json.load(f)
 
         self.sender_initializer()
-        if os.path.exists(self.df_path):
-            self.df = pd.read_csv(self.df_path)
+        if os.path.exists(self.json_path):
+            with open(self.json_path, 'r') as f:
+                self.df = json.load(f) 
         else:
-            self.df = pd.DataFrame(columns = ['prompt', 'url', 'filename', 'is_downloaded'])
+            self.df = []
+            # pd.DataFrame(columns = ['prompt', 'url', 'filename', 'is_downloaded'])
 
     
     def sender_initializer(self):
@@ -60,10 +66,18 @@ class Receiver:
                         id = message['id']
                         prompt = message['content'].split('**')[1].split(' --')[0]
                         url = message['attachments'][0]['url']
-                        cnt = len(os.listdir(self.local_path))
-                        filename = f'{i+cnt:05}.png'
-                        if id not in self.df.index:
-                            self.df.loc[id] = [prompt, url, filename, 0]
+                        exists_prompts = [d['prompt'] for d in self.df]
+                        if prompt not in exists_prompts:
+                            filename = hashlib.sha256(prompt.encode()).hexdigest() + ".png"
+                            info = {
+                                "prompt":prompt,
+                                "url":url,
+                                "filename":filename,
+                                "is_downloaded":0
+                            }
+                            self.df.append(info)
+                        else:
+                            filename = self.df[exists_prompts.index(prompt)]['filename']
 
                     else:
                         id = message['id']
@@ -90,28 +104,34 @@ class Receiver:
             print(self.awaiting_list)
             print('=========================================')
 
-        waiting_for_download = [self.df.loc[i].prompt for i in self.df.index if self.df.loc[i].is_downloaded == 0]
+        waiting_for_download = [d["prompt"] for d in self.df if d["is_downloaded"] == 0]
         if len(waiting_for_download) > 0:
             print(datetime.now().strftime("%H:%M:%S"))
             print('waiting for download prompts: ', waiting_for_download)
+            print(f"total {len(waiting_for_download)} prompts")
             print('=========================================')
+        
+        print(f"total {len(os.listdir(self.local_path))} images has been downloaded")
+        print('=========================================')
 
     def downloading_results(self):
         processed_prompts = []
-        for i in self.df.index:
-            if self.df.loc[i].is_downloaded == 0:
-                response = requests.get(self.df.loc[i].url)
-                with open(os.path.join(self.local_path, self.df.loc[i].filename), "wb") as req:
+        for i in range(len(self.df)):
+            if self.df[i]["is_downloaded"] == 0:
+                response = requests.get(self.df[i]["url"])
+                with open(os.path.join(self.local_path, self.df[i]["filename"]), "wb") as req:
                     req.write(response.content)
-                self.df.loc[i, 'is_downloaded'] = 1
-                processed_prompts.append(self.df.loc[i].prompt)
+                self.df[i]["is_downloaded"] = 1
+                processed_prompts.append(self.df[i]["prompt"])
         if len(processed_prompts) > 0:
             print(datetime.now().strftime("%H:%M:%S"))
             print('processed prompts: ', processed_prompts)
             print('=========================================')
 
     def save_result(self):
-        self.df.to_csv(self.df_path, index=False)
+        with open(self.json_path, 'w') as f:
+            json.dump(self.df, f)
+
   
     def main(self):
         while True:
@@ -127,7 +147,7 @@ class Receiver:
 def parse_args(args):
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--params',help='Path to discord authorization and channel parameters', required=True)
+    parser.add_argument('--params',help='Path to discord authorization and channel parameters', default="sender_params.json")
     parser.add_argument('--local-path',help='Path to output images', required=True)
     parser.add_argument('--task-name',help='task name',default='mdj')
         

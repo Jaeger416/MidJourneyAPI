@@ -60,10 +60,11 @@ class Sender:
 def parse_args(args):
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--params', help='Path to discord authorization and channel parameters', required=True)
+    parser.add_argument('--params', help='Path to discord authorization and channel parameters', default="sender_params.json")
     parser.add_argument('--prompt',help='prompt to generate', default='a little papi')
-    parser.add_argument('--from-file',type=str,default=None)
+    parser.add_argument('--from-file',type=str,default="hps_training_prompts.json")
     parser.add_argument('--resume', type=int, default=0)
+    parser.add_argument("--task", type=str)
         
     return parser.parse_args(args)
 
@@ -86,13 +87,13 @@ if __name__ == "__main__":
             try:
                 prompt = data[idx]
                 sender.send(prompt)
-                time.sleep(3)
+                time.sleep(4.5)
                 idx += 1
                 print(f" finished [{idx}/{len(data)}  ")
             except ConnectionResetError or requests.exceptions.ProxyError:
                 time.sleep(1)
             except Exception as e:
-                with open('finished_idx.json', 'w') as f:
+                with open(f'{args.task}/finished_idx.json', 'w') as f:
                     json.dump(idx, f)
     else:   
         sender.send(prompt)
