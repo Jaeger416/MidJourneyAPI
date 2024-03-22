@@ -87,7 +87,7 @@ if __name__ == "__main__":
             try:
                 prompt = data[idx]
                 sender.send(prompt)
-                time.sleep(4.5)
+                time.sleep(6.0)
                 idx += 1
                 print(f" finished [{idx}/{len(data)}  ")
             except ConnectionResetError or requests.exceptions.ProxyError:

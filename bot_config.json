@@ -1,0 +1,9 @@
+{
+    "channel_id": "1218379502938226748", 
+    "message_quantity":100000,
+    "loop_delay_secs":0.01,
+    "delay_secs":0.01,
+    "image_dir_root":"bot_downloads/images",
+    "token":"MTIxODY1MTcwMDI0ODk3MzQ1NA.G0fGj1.52ivfCkN4_tZSahHpYjJ9C2OsOdXZIYYD7qkT4"
+
+}

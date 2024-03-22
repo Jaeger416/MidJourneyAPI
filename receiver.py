@@ -1,7 +1,7 @@
 import requests
 import json
 import numpy as np
-import time
+from tqdm import tqdm
 import pandas as pd
 import os
 import re
@@ -116,7 +116,7 @@ class Receiver:
 
     def downloading_results(self):
         processed_prompts = []
-        for i in range(len(self.df)):
+        for i in tqdm(range(len(self.df))):
             if self.df[i]["is_downloaded"] == 0:
                 response = requests.get(self.df[i]["url"])
                 with open(os.path.join(self.local_path, self.df[i]["filename"]), "wb") as req:
@@ -140,9 +140,9 @@ class Receiver:
                 self.outputer()
                 self.downloading_results()
                 self.save_result()
-                time.sleep(2)
             except:
                 self.save_result()
+                # time.sleep(0.5)
 
 def parse_args(args):
     
