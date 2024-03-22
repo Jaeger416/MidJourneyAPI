@@ -64,7 +64,8 @@ def parse_args(args):
     parser.add_argument('--prompt',help='prompt to generate', default='a little papi')
     parser.add_argument('--from-file',type=str,default="hps_training_prompts.json")
     parser.add_argument('--resume', type=int, default=0)
-    parser.add_argument("--task", type=str)
+    parser.add_argument("--task-name", type=str)
+    parser.add_argument("--wait-time", type=float, default=45.0)
         
     return parser.parse_args(args)
 
@@ -87,13 +88,13 @@ if __name__ == "__main__":
             try:
                 prompt = data[idx]
                 sender.send(prompt)
-                time.sleep(6.0)
+                time.sleep(args.wait_time)
                 idx += 1
                 print(f" finished [{idx}/{len(data)}  ")
             except ConnectionResetError or requests.exceptions.ProxyError:
                 time.sleep(1)
             except Exception as e:
-                with open(f'{args.task}/finished_idx.json', 'w') as f:
+                with open(f'{args.task_name}/finished_idx.json', 'w') as f:
                     json.dump(idx, f)
     else:   
         sender.send(prompt)

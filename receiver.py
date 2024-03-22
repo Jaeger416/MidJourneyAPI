@@ -21,7 +21,7 @@ class Receiver:
         self.params = params
         self.local_path = local_path
         self.task_name = task_name
-        self.json_path = f'{task_name}.json'
+        self.json_path = f'{task_name}/{task_name}.json'
         os.makedirs(self.local_path, exist_ok=True)
         
         with open('hps_training_prompts.json', 'r') as f:
@@ -148,7 +148,6 @@ def parse_args(args):
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--params',help='Path to discord authorization and channel parameters', default="sender_params.json")
-    parser.add_argument('--local-path',help='Path to output images', required=True)
     parser.add_argument('--task-name',help='task name',default='mdj')
         
     return parser.parse_args(args)
@@ -159,8 +158,8 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     args = parse_args(args)
     params = args.params
-    local_path = args.local_path #'/Users/georgeb/discord_api/images/'
     task_name = args.task_name
+    local_path = task_name + '/images'
 
     print('=========== listening started ===========')
     receiver = Receiver(params, local_path, task_name)
